@@ -1,11 +1,31 @@
-data/raw/
-data/processed/
+# Virtual environments
+bin/
+lib/
+pyvenv.cfg
+CACHEDIR.TAG
+newenv/
+waste-classification/
+
+# Python
 __pycache__/
 *.pyc
-.DS_Store
+*.pyo
+*.pyd
+.Python
 *.egg-info/
-.env
-wandb/
-*.pth
-*.pt
-waste-classification/
+
+# Data (too large for git)
+data/raw/
+data/processed/
+
+# Model checkpoints (too large for git - use Git LFS or external storage)
+experiments/*.pth
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
