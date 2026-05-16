@@ -1,6 +1,5 @@
 """
 experiment_log.py - Experiment tracking and results log
-
 Author: khawar khan
 
 This file tracks all experiments run in this project.
