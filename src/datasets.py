@@ -103,7 +103,7 @@ def get_trashnet_loaders(root: str, batch_size: int = 32,
 
 
 if __name__ == '__main__':
-    DATA_ROOT = os.path.expanduser('~/waste-classification/data/raw/trashnet')
+    DATA_ROOT = 'D:/waste-classification/data/raw/trashnet'
 
     dataset = TrashNetDataset(DATA_ROOT, transform=get_transforms('val'))
     print(f"Total images: {len(dataset)}")
