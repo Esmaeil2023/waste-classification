@@ -41,9 +41,9 @@ REALWASTE_MAP = {
     'Paper':               'paper',
     'Plastic':             'plastic',
     'Miscellaneous Trash': 'trash',
-    'Food Organics':       None,   # no equivalent in TrashNet → skip
-    'Textile Trash':       None,   # no equivalent in TrashNet → skip
-    'Vegetation':          None,   # no equivalent in TrashNet → skip
+    'Food Organics':       'trash',  # mapped to trash (non-recyclable)
+    'Textile Trash':       'trash',  # mapped to trash (non-recyclable)
+    'Vegetation':          'trash',  # mapped to trash (non-recyclable)
 }
 # ─────────────────────────────────────────────────────────────────────────────
 
