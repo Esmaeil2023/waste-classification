@@ -207,17 +207,13 @@ def train(config: dict):
     params = count_parameters(model)
     print(f"  Trainable parameters: {params['trainable']:,}")
 
-# Compute class weights to fix 0% F1 on 'trash' class
-all_labels_list = [label for _, label in train_loader.dataset.dataset.samples 
-                   if hasattr(train_loader.dataset, 'indices') 
-                   else label]
-# Simpler approach — use known TrashNet class counts
-# trash=137, glass=501, cardboard=403, metal=410, paper=594, plastic=482
-_counts = _np.array([403, 501, 410, 594, 482, 137], dtype=float)
-_weights = _counts.sum() / (6 * _counts)
-_tensor = torch.FloatTensor(_weights).to(device)
-criterion = nn.CrossEntropyLoss(weight=_tensor)
-print(f"  Class weights: trash={_weights[5]:.2f}x highest")
+    # Fix: weighted loss for trash class imbalance (4.7x underrepresented)
+    import numpy as _np
+    _counts = _np.array([403, 501, 410, 594, 482, 137], dtype=float)
+    _weights = _counts.sum() / (6 * _counts)
+    _tensor = torch.FloatTensor(_weights).to(device)
+    criterion = nn.CrossEntropyLoss(weight=_tensor)
+    print(f"  Class weights applied — trash: {_weights[5]:.2f}x")
     # ── Optimizer ─────────────────────────────────────────────────────────────
     # AdamW = Adam optimizer with decoupled weight decay
     # Better than SGD for fine-tuning pretrained models
