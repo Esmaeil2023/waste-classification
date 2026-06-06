@@ -31,6 +31,18 @@ EXPERIMENT_RESULTS = [
         'notes': 'Core finding: 29.4% accuracy drop. Paper recall=0.98 but precision=0.25',
     },
     {
+        'id': 'EXP003b',
+        'model': 'ResNet-50',
+        'dataset_train': 'TrashNet',
+        'dataset_test': 'TrashNet (test split)',
+        'epochs': 5,
+        'optimizer': 'AdamW',
+        'lr': 1e-4,
+        'balanced_accuracy': 0.745,
+        'status': 'DONE',
+        'notes': 'Class-weighted loss fix. Trash F1: 0% -> 46.2%. Overall: 67.2% -> 74.5%',
+    },
+    {
         'id': 'EXP003',
         'model': 'EfficientNet-B3',
         'dataset_train': 'TrashNet',
