@@ -102,6 +102,57 @@ def get_trashnet_loaders(root: str, batch_size: int = 32,
     return train_loader, val_loader, test_loader
 
 
+# GD dataset class mapping (12 classes → 6 unified classes)
+GD_MAP = {
+    'cardboard':   'cardboard',
+    'brown-glass': 'glass',
+    'green-glass': 'glass',
+    'white-glass': 'glass',
+    'metal':       'metal',
+    'paper':       'paper',
+    'plastic':     'plastic',
+    'trash':       'trash',
+    'battery':     'trash',
+    'biological':  'trash',
+    'clothes':     'trash',
+    'shoes':       'trash',
+}
+
+
+class GDDataset(Dataset):
+    """
+    Loads the Garbage Classification dataset (12 classes) and maps
+    them to our 6 unified classes. Source:
+    https://www.kaggle.com/datasets/mostafaabla/garbage-classification
+    """
+
+    def __init__(self, root: str, transform: Optional[Callable] = None):
+        self.root = Path(root)
+        self.transform = transform
+        self.samples = []
+
+        for folder_name, unified_name in GD_MAP.items():
+            class_dir = self.root / folder_name
+            if not class_dir.exists():
+                continue
+            label_idx = CLASS_TO_IDX[unified_name]
+            for img_file in sorted(class_dir.iterdir()):
+                if img_file.suffix.lower() in ['.jpg', '.jpeg', '.png']:
+                    self.samples.append((str(img_file), label_idx))
+
+        print(f"GDDataset loaded: {len(self.samples)} images from {self.root}")
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        img_path, label = self.samples[idx]
+        image = Image.open(img_path).convert('RGB')
+        if self.transform:
+            image = self.transform(image)
+        return image, label
+
+
 if __name__ == '__main__':
     DATA_ROOT = os.path.expanduser('~/waste-classification/data/raw/trashnet')
 
