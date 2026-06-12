@@ -3,6 +3,7 @@ import time
 import torch
 import torch.nn as nn
 import wandb
+
 from torch.utils.data import DataLoader
 from sklearn.metrics import balanced_accuracy_score, classification_report
 
@@ -10,6 +11,8 @@ from sklearn.metrics import balanced_accuracy_score, classification_report
 from datasets import get_trashnet_loaders, CLASSES
 from models import get_model, count_parameters
 
+from sklearn.utils.class_weight import compute_class_weight
+import numpy as np
 # ── What this file does ──────────────────────────────────────────────────────
 # This is the main training loop. It:
 #   1. Loads the dataset using datasets.py
@@ -204,11 +207,13 @@ def train(config: dict):
     params = count_parameters(model)
     print(f"  Trainable parameters: {params['trainable']:,}")
 
-    # ── Loss function ─────────────────────────────────────────────────────────
-    # CrossEntropyLoss is standard for multi-class classification
-    # We could add class weights here to handle imbalance (done later)
-    criterion = nn.CrossEntropyLoss()
-
+    # Fix: weighted loss for trash class imbalance (4.7x underrepresented)
+    import numpy as _np
+    _counts = _np.array([403, 501, 410, 594, 482, 137], dtype=float)
+    _weights = _counts.sum() / (6 * _counts)
+    _tensor = torch.FloatTensor(_weights).to(device)
+    criterion = nn.CrossEntropyLoss(weight=_tensor)
+    print(f"  Class weights applied — trash: {_weights[5]:.2f}x")
     # ── Optimizer ─────────────────────────────────────────────────────────────
     # AdamW = Adam optimizer with decoupled weight decay
     # Better than SGD for fine-tuning pretrained models
