@@ -222,9 +222,7 @@ if __name__ == '__main__':
     NUM_CLASSES  = 6
     BATCH_SIZE   = 32
 
-    REALWASTE_ROOT = os.path.expanduser(
-        '~/waste-classification/data/raw/realwaste/realwaste-main/RealWaste'
-    )
+    REALWASTE_ROOT = 'D:/waste-classification/data/raw/realwaste/realwaste-main/RealWaste'
     # ───────────────────────────────────────────────────────────────────────
 
     # Device
