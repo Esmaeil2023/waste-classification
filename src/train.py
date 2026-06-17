@@ -35,7 +35,7 @@ import numpy as np
 # All hyperparameters in one place — easy to change and track
 CONFIG = {
     'model_name':   'resnet50',   # which model to train: resnet50, efficientnet, vit
-    'data_root':    os.path.expanduser('~/waste-classification/data/raw/trashnet'),
+    'data_root':    'D:/waste-classification/data/raw/trashnet',
     'num_classes':  6,
     'batch_size':   16,
     'num_epochs':   5,           # start with 5 epochs for the baseline
