@@ -32,7 +32,7 @@ from models import get_model, count_parameters
 # All hyperparameters in one place — easy to change and track
 CONFIG = {
     'model_name':   'resnet50',   # which model to train: resnet50, efficientnet, vit
-    'data_root':    os.path.expanduser('~/waste-classification/data/raw/trashnet'),
+    'data_root':    os.path.expanduser('/content/drive/MyDrive/ColabNotebooks/data/raw/Trashnet'),
     'num_classes':  6,
     'batch_size':   16,
     'num_epochs':   5,           # start with 5 epochs for the baseline
