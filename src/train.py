@@ -300,7 +300,11 @@ def train(config: dict):
     print("\nEvaluating best model on test set...")
 
     # Load the best checkpoint
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(
+        checkpoint_path,
+        map_location=device,
+        weights_only=False
+    )
     model.load_state_dict(checkpoint['model_state_dict'])
 
     test_metrics = evaluate(model, test_loader, criterion, device)
