@@ -40,7 +40,7 @@ CONFIG = {
     'weight_decay': 1e-2,         # L2 regularization to prevent overfitting
     'train_ratio':  0.7,          # 70% of data for training
     'val_ratio':    0.15,         # 15% for validation, 15% for test
-    'save_dir':     os.path.expanduser('~/waste-classification/experiments'),
+    'save_dir':     os.path.expanduser('/content/drive/MyDrive/ColabNotebooks'),
     'use_wandb':    False,        # set to True after running: wandb login
     'seed':         42,
 }
