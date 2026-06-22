@@ -306,7 +306,6 @@ def train(config: dict):
         weights_only=False
     )
     model.load_state_dict(checkpoint['model_state_dict'])
-    # NOTE: The test set must not be used during training.
     test_metrics = evaluate(model, test_loader, criterion, device)
     print(f"\nTest Balanced Accuracy: {test_metrics['balanced_acc']:.4f}")
     print("\nPer-class results:")
