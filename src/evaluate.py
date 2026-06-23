@@ -14,7 +14,8 @@ from models import get_model
 
 # ── What this file does ──────────────────────────────────────────────────────
 # Loads a trained model checkpoint and evaluates it on OOD (out-of-distribution)
-# datasets. This is the core of our domain generalization research:
+# datasets. This is the
+# core of our domain generalization research:
 #
 #   - Train on TrashNet (clean, white background)
 #   - Test on RealWaste (real landfill images) → measure the accuracy DROP
@@ -199,7 +200,11 @@ def load_model_from_checkpoint(checkpoint_path: str, model_name: str,
         - config: the training config dict
     """
     print(f"\nLoading checkpoint: {checkpoint_path}")
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(
+        checkpoint_path,
+        map_location=device,
+        weights_only=False
+        )
 
     model = get_model(model_name, num_classes=num_classes)
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -216,7 +221,7 @@ def load_model_from_checkpoint(checkpoint_path: str, model_name: str,
 if __name__ == '__main__':
     # ── Configuration ──────────────────────────────────────────────────────
     CHECKPOINT_PATH = os.path.expanduser(
-        '~/waste-classification/experiments/resnet50_best.pth'
+        '/content/drive/MyDrive/ColabNotebooks/resnet50_best.pth'
     )
     MODEL_NAME   = 'resnet50'
     NUM_CLASSES  = 6
