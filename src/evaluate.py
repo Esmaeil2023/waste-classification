@@ -228,7 +228,7 @@ if __name__ == '__main__':
     BATCH_SIZE   = 32
 
     REALWASTE_ROOT = os.path.expanduser(
-        '/content/drive/MyDrive/ColabNotebooks/resnet50_best.pth'
+        '/content/drive/MyDrive/ColabNotebooks/dataset'
     )
     # ───────────────────────────────────────────────────────────────────────
 
