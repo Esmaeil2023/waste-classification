@@ -272,7 +272,7 @@ class Evaluator:
 
         preds, labels, losses = [], [], []
 
-        for batch_idx , (x, y) in loader:
+        for batch_idx , (x, y) in enumerate(loader):
             x, y = x.to(self.device), y.to(self.device)
 
             out = self.model(x)
