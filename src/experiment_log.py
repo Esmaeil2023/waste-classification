@@ -127,6 +127,36 @@ EXPERIMENT_RESULTS = [
         'notes': 'Best OOD. ViT attention mechanism generalizes better than CNNs.',
     },
     {
+        'id': 'EXP012',
+        'model': 'ResNet-50',
+        'dataset_train': 'TrashNet + GD (albumentations augmentation)',
+        'dataset_test': 'Combined test split',
+        'epochs': 20,
+        'optimizer': 'AdamW',
+        'lr': 1e-4,
+        'balanced_accuracy': 0.974,
+        'status': 'DONE',
+        'notes': 'Mitigation attempt #1: replaced torchvision aug with albumentations '
+                 '(motion blur, gaussian blur, shadows, brightness/contrast, gauss noise, '
+                 'coarse dropout). In-dist accuracy improved slightly: 95.5% -> 97.4%.',
+    },
+    {
+        'id': 'EXP013',
+        'model': 'ResNet-50',
+        'dataset_train': 'TrashNet + GD (albumentations augmentation)',
+        'dataset_test': 'RealWaste (OOD)',
+        'balanced_accuracy': 0.570,
+        'domain_gap': -0.404,
+        'status': 'DONE',
+        'notes': 'Mitigation attempt #1 result: OOD accuracy DECREASED 60.0% -> 57.0%, '
+                 'domain gap WORSENED -35.5% -> -40.4%. Negative result: heavier synthetic '
+                 'augmentation on the SAME limited training images increased in-distribution '
+                 'overconfidence without improving real-world transfer. Suggests the gap is '
+                 'driven more by lack of training image diversity than by lack of synthetic '
+                 'noise/blur/occlusion. Next: test a third, visually diverse training dataset '
+                 '(sumn2u/garbage-classification-v2) instead of synthetic augmentation alone.',
+    },
+    {
         'id': 'EXP003',
         'model': 'EfficientNet-B3',
         'dataset_train': 'TrashNet',
