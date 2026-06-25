@@ -272,7 +272,7 @@ class Evaluator:
 
         preds, labels, losses = [], [], []
 
-        for x, y in loader:
+        for batch_idx , (x, y) in loader:
             x, y = x.to(self.device), y.to(self.device)
 
             out = self.model(x)
@@ -282,6 +282,9 @@ class Evaluator:
 
             preds.extend(out.argmax(1).cpu().numpy())
             labels.extend(y.cpu().numpy())
+
+            if (batch_idx + 1) % 10 == 0:
+                print(f"  Batch {batch_idx + 1}/{len(loader)}")
 
         acc = balanced_accuracy_score(labels, preds)
         f1 = f1_score(labels, preds, average="macro")
