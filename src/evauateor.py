@@ -112,7 +112,7 @@ class TACOMapper(BaseMapper):
         "Glass jar": "glass",
 
         #metal
-         "Food Can": "metal",
+        "Food Can": "metal",
         "Drink can": "metal",
         "Aerosol": "metal",
         "Scrap metal": "metal",
@@ -144,7 +144,6 @@ class TACOMapper(BaseMapper):
     }
 
     def map(self, label: str):
-        label = label.lower().strip()
         return self.MAP.get(label, "trash")
 
 
@@ -271,7 +270,8 @@ class Evaluator:
     def evaluate(self, loader, name: str):
 
         preds, labels, losses = [], [], []
-
+        print(f"Evaluating on: {name} (OOD)")
+        print(f"  Total batches: {len(loader)}")
         for batch_idx , (x, y) in enumerate(loader):
             x, y = x.to(self.device), y.to(self.device)
 
