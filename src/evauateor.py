@@ -10,6 +10,7 @@ from PIL import Image
 
 from sklearn.metrics import balanced_accuracy_score, f1_score
 
+from datasets import get_transforms
 from models import get_model
 
 
@@ -342,7 +343,7 @@ def run(cfg: Config):
     # ─────────────────────────────
     for name in datasets:
 
-        ds = factory[name](transform=None, **datasets[name])
+        ds = factory[name](transform= get_transforms("TEST"), **datasets[name])
 
         loader = DataLoader(ds, batch_size=cfg.batch_size, shuffle=False)
 
@@ -363,7 +364,7 @@ def run(cfg: Config):
 
     for src, tgt in cross_pairs:
 
-        ds = factory[src](transform=None, **datasets[src])
+        ds = factory[src](transform=get_transforms("TEST"), **datasets[src])
         loader = DataLoader(ds, batch_size=cfg.batch_size, shuffle=False)
 
         res = evaluator.evaluate(loader, f"{src}->{tgt}")
