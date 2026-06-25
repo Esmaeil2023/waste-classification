@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 
-from sklearn.metrics import balanced_accuracy_score
+from sklearn.metrics import balanced_accuracy_score, f1_score
 
 from models import get_model
 
@@ -199,7 +199,6 @@ class RealWasteDataset(BaseDataset):
 # TACO DATASET (COCO STYLE)
 # ─────────────────────────────────────────────
 class TACODataset(BaseDataset):
-
     def __init__(self, root, annotations, mapper: TACOMapper, transform=None):
         super().__init__(transform)
         self.root = Path(root)
@@ -208,14 +207,15 @@ class TACODataset(BaseDataset):
 
     def _index(self, ann_path):
 
-        with open(ann_path) as f:
+        with open(ann_path, "r") as f:
             data = json.load(f)
 
         images = {img["id"]: img["file_name"] for img in data["images"]}
+        categories = {c["id"]: c["name"] for c in data["categories"]}
 
         for ann in data["annotations"]:
 
-            raw = data["categories"][ann["category_id"]]["name"]
+            raw = categories[ann["category_id"]]
             mapped = self.mapper.map(raw)
 
             if mapped is None:
@@ -269,8 +269,6 @@ class Evaluator:
     @torch.no_grad()
     def evaluate(self, loader, name: str):
 
-        self.model.eval()
-
         preds, labels, losses = [], [], []
 
         for x, y in loader:
@@ -284,11 +282,16 @@ class Evaluator:
             preds.extend(out.argmax(1).cpu().numpy())
             labels.extend(y.cpu().numpy())
 
+        acc = balanced_accuracy_score(labels, preds)
+        f1 = f1_score(labels, preds, average="macro")
+
         return {
             "dataset": name,
             "loss": sum(losses) / len(losses),
-            "acc": balanced_accuracy_score(labels, preds)
+            "balanced_acc": acc,
+            "macro_f1": f1
         }
+
 
 
 # ─────────────────────────────────────────────
@@ -313,11 +316,10 @@ def run(cfg: Config):
 
     print("Checkpoint epoch:", ckpt.get("epoch", "N/A"))
 
-    factory = DatasetFactory()
-    evaluator = Evaluator(model, device)
-
-    factory.register("realwaste", RealWasteDataset)
-    factory.register("taco", TACODataset)
+    factory = {
+        "realwaste": RealWasteDataset,
+        "taco": TACODataset
+    }
 
     datasets = {
         "realwaste": {
@@ -331,30 +333,59 @@ def run(cfg: Config):
         }
     }
 
-    results = []
+    evaluator = Evaluator(model, device)
 
-    for name, params in datasets.items():
+    results = {}
 
-        ds = factory.create(name, transform=None, **params)
+    # ─────────────────────────────
+    # IN-DOMAIN EVAL
+    # ─────────────────────────────
+    for name in datasets:
 
-        loader = DataLoader(
-            ds,
-            batch_size=cfg.batch_size,
-            shuffle=False
-        )
+        ds = factory[name](transform=None, **datasets[name])
+
+        loader = DataLoader(ds, batch_size=cfg.batch_size, shuffle=False)
 
         res = evaluator.evaluate(loader, name)
-        results.append(res)
+        results[name] = res
 
-        print(f"{name}: {res['acc']:.4f}")
+        print(f"{name}: acc={res['balanced_acc']:.4f} | f1={res['macro_f1']:.4f}")
 
-    print("\n===== FINAL SUMMARY =====")
-    for r in results:
-        print(f"{r['dataset']}: {r['acc']*100:.2f}%")
+    # ─────────────────────────────
+    # CROSS DOMAIN EVAL
+    # ─────────────────────────────
+    print("\n===== CROSS DOMAIN =====")
+
+    cross_pairs = [
+        ("taco", "realwaste"),
+        ("realwaste", "taco")
+    ]
+
+    for src, tgt in cross_pairs:
+
+        ds = factory[src](transform=None, **datasets[src])
+        loader = DataLoader(ds, batch_size=cfg.batch_size, shuffle=False)
+
+        res = evaluator.evaluate(loader, f"{src}->{tgt}")
+
+        print(f"{src}->{tgt}: acc={res['balanced_acc']:.4f} | f1={res['macro_f1']:.4f}")
+
+        results[f"{src}->{tgt}"] = res
+
+    # ─────────────────────────────
+    # GENERALIZATION GAP
+    # ─────────────────────────────
+    gap = abs(
+        results["realwaste"]["balanced_acc"] -
+        results["taco"]["balanced_acc"]
+    )
+
+    print("\n===== SUMMARY =====")
+    print("RealWaste:", results["realwaste"])
+    print("TACO:", results["taco"])
+    print("Generalization Gap:", gap)
 
     return results
-
-
 # ─────────────────────────────────────────────
 # ENTRY POINT
 # ─────────────────────────────────────────────
@@ -363,8 +394,8 @@ if __name__ == "__main__":
     cfg = Config(
         checkpoint_path="/content/drive/MyDrive/ColabNotebooks/resnet50_best.pth",
         realwaste_root="/content/drive/MyDrive/ColabNotebooks/dataset",
-        taco_root="/path/to/taco/images",
-        taco_annotations="/path/to/taco/annotations.json",
+        taco_root="/content/drive/MyDrive/ColabNotebooks/Taco/data/TACO/data",
+        taco_annotations="/content/drive/MyDrive/ColabNotebooks/Taco/data/TACO/data/annotations.json",
     )
 
     run(cfg)
