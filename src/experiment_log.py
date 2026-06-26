@@ -157,6 +157,46 @@ EXPERIMENT_RESULTS = [
                  '(sumn2u/garbage-classification-v2) instead of synthetic augmentation alone.',
     },
     {
+        'id': 'EXP014',
+        'model': 'ResNet-50',
+        'dataset_train': 'TrashNet + GD + sumn2u (30,301 images, no heavy aug)',
+        'dataset_test': '3-dataset combined test split',
+        'epochs': 20,
+        'optimizer': 'AdamW',
+        'lr': 1e-4,
+        'balanced_accuracy': 0.974,
+        'status': 'DONE',
+        'notes': 'Mitigation attempt #2: added a THIRD training dataset '
+                 '(sumn2u/garbage-classification-v2, 12,259 images, 10 classes mapped to our 6) '
+                 'on top of TrashNet+GD, using plain (non-augmented) transforms to isolate the '
+                 'effect of dataset diversity alone. In-dist accuracy: 97.4%, all classes >=95% F1.',
+    },
+    {
+        'id': 'EXP015',
+        'model': 'ResNet-50',
+        'dataset_train': 'TrashNet + GD + sumn2u (30,301 images, no heavy aug)',
+        'dataset_test': 'RealWaste (OOD)',
+        'balanced_accuracy': 0.564,
+        'domain_gap': -0.410,
+        'status': 'DONE',
+        'notes': 'Mitigation attempt #2 result: OOD accuracy DECREASED further to 56.4% '
+                 '(worst of all 3 ResNet-50 OOD runs so far). Domain gap WORSENED to -41.0%, '
+                 'the largest gap recorded for ResNet-50. KEY FINDING: both mitigation attempts '
+                 '(synthetic augmentation in EXP012/013, and adding a 3rd same-domain dataset '
+                 'here) consistently INCREASE in-distribution accuracy while DECREASING OOD '
+                 'accuracy, in that order: 95.5/60.0 -> 97.4/57.0 -> 97.4/56.4. This indicates '
+                 'the domain gap is not caused by insufficient training data volume or '
+                 'diversity WITHIN similar-style sources (TrashNet, GD12, and sumn2u are all '
+                 'clean-ish single-object photography despite different backgrounds/cameras) - '
+                 'it is a genuine domain mismatch with RealWaste (landfill conditions: '
+                 'deformed/crushed objects, dirt, multi-object frames, harsh lighting). '
+                 'Adding more of the same KIND of data lets the model memorize more '
+                 'source-specific surface cues (background, print/logos) without learning '
+                 'anything that transfers. Recommendation: the own/hard team dataset '
+                 '(real-world conditions) is likely a more promising mitigation lever than '
+                 'further augmentation or same-domain dataset expansion.',
+    },
+    {
         'id': 'EXP003',
         'model': 'EfficientNet-B3',
         'dataset_train': 'TrashNet',
