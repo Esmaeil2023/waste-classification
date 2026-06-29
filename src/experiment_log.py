@@ -153,8 +153,7 @@ EXPERIMENT_RESULTS = [
                  'augmentation on the SAME limited training images increased in-distribution '
                  'overconfidence without improving real-world transfer. Suggests the gap is '
                  'driven more by lack of training image diversity than by lack of synthetic '
-                 'noise/blur/occlusion. Next: test a third, visually diverse training dataset '
-                 '(sumn2u/garbage-classification-v2) instead of synthetic augmentation alone.',
+                 'noise/blur/occlusion.',
     },
     {
         'id': 'EXP014',
@@ -180,21 +179,104 @@ EXPERIMENT_RESULTS = [
         'domain_gap': -0.410,
         'status': 'DONE',
         'notes': 'Mitigation attempt #2 result: OOD accuracy DECREASED further to 56.4% '
-                 '(worst of all 3 ResNet-50 OOD runs so far). Domain gap WORSENED to -41.0%, '
-                 'the largest gap recorded for ResNet-50. KEY FINDING: both mitigation attempts '
-                 '(synthetic augmentation in EXP012/013, and adding a 3rd same-domain dataset '
-                 'here) consistently INCREASE in-distribution accuracy while DECREASING OOD '
-                 'accuracy, in that order: 95.5/60.0 -> 97.4/57.0 -> 97.4/56.4. This indicates '
-                 'the domain gap is not caused by insufficient training data volume or '
-                 'diversity WITHIN similar-style sources (TrashNet, GD12, and sumn2u are all '
-                 'clean-ish single-object photography despite different backgrounds/cameras) - '
-                 'it is a genuine domain mismatch with RealWaste (landfill conditions: '
-                 'deformed/crushed objects, dirt, multi-object frames, harsh lighting). '
-                 'Adding more of the same KIND of data lets the model memorize more '
-                 'source-specific surface cues (background, print/logos) without learning '
-                 'anything that transfers. Recommendation: the own/hard team dataset '
-                 '(real-world conditions) is likely a more promising mitigation lever than '
-                 'further augmentation or same-domain dataset expansion.',
+                 '(worst of all 3 ResNet-50 OOD runs at the time). Domain gap WORSENED to -41.0%. '
+                 'KEY FINDING: both mitigation attempts so far (synthetic augmentation in '
+                 'EXP012/013, and adding a 3rd same-domain dataset here) consistently INCREASE '
+                 'in-distribution accuracy while DECREASING OOD accuracy: 95.5/60.0 -> '
+                 '97.4/57.0 -> 97.4/56.4. TrashNet, GD12, and sumn2u are all clean-ish '
+                 'single-object photography despite different backgrounds/cameras - this is '
+                 'a genuine domain mismatch with RealWaste (landfill conditions: '
+                 'deformed/crushed objects, dirt, multi-object frames, harsh lighting), not a '
+                 'lack of training data volume or stylistic diversity. sumn2u DROPPED from '
+                 'further experiments based on this result. Recommendation: the own/hard team '
+                 'dataset or limited exposure to real OOD data is a more promising lever.',
+    },
+    {
+        'id': 'EXP016',
+        'model': 'ResNet-50 / EfficientNet-B3 / ViT-Small',
+        'dataset_train': 'TrashNet + GD (no retraining - diagnostic only)',
+        'dataset_test': 'RealWaste (OOD), trash class excluded at eval time',
+        'balanced_accuracy': None,
+        'status': 'DONE',
+        'notes': 'Diagnostic: re-evaluated existing combined checkpoints on RealWaste with '
+                 'the trash class removed from scoring, to test whether trash label '
+                 'heterogeneity (battery/biological/clothes/shoes/food/vegetation all merged) '
+                 'was dragging down the OOD average. RESULT WAS OPPOSITE OF HYPOTHESIS: removing '
+                 'trash DECREASED balanced accuracy for all 3 models (ResNet -6.4pts, '
+                 'EfficientNet -7.7pts, ViT -2.5pts). Trash is actually the highest-recall class '
+                 'on RealWaste (majority class, ~35% of samples), so removing it from the '
+                 'macro-average removes the model\'s best class, leaving only the 5 harder '
+                 'classes. CONCLUSION: does not support label heterogeneity in "trash" as the '
+                 'primary cause of the domain gap; more consistent with surface-level feature '
+                 'reliance (background/print, per GradCAM evidence) than with noisy trash '
+                 'labels specifically. NOTE: 6-class baseline reproduced here as 54.7% for '
+                 'ResNet-50 in one run vs originally logged 60.0% (EXP009) in another; '
+                 'flagged for re-verification.',
+    },
+    {
+        'id': 'EXP017',
+        'model': 'ResNet-50',
+        'dataset_train': 'TrashNet + GD + 15% of RealWaste (mitigation: partial domain exposure)',
+        'dataset_test': 'RealWaste, remaining held-out 85% (never seen in training)',
+        'epochs': 20,
+        'optimizer': 'AdamW',
+        'lr': 1e-4,
+        'balanced_accuracy': 0.764,
+        'status': 'DONE',
+        'notes': 'BEST MITIGATION RESULT (mitigation attempt #3). Mixed a small slice (15%, '
+                 '712 images) of RealWaste into training alongside TrashNet+GD, keeping the '
+                 'remaining 85% (4,040 images) fully held out as the OOD test set. Balanced '
+                 'accuracy on held-out RealWaste jumped from 60.0% (zero-shot baseline, EXP009) '
+                 'to 76.4% - a +16.4 point improvement, the largest of any mitigation strategy '
+                 'tested (vs -3.0pts for augmentation in EXP013, -3.6pts for sumn2u in EXP015). '
+                 'Per-class F1 on held-out RealWaste: cardboard 0.70, glass 0.75, metal 0.82, '
+                 'paper 0.74, plastic 0.76, trash 0.88. FRAMING NOTE: this changes the research '
+                 'question from pure zero-shot domain generalization to limited-supervision '
+                 'domain adaptation - the model has now seen a small amount of real target-'
+                 'domain data during training. Confirms that exposure to even a little '
+                 'genuinely different (real-world) data is far more effective than synthetic '
+                 'augmentation or more same-domain data.',
+    },
+    {
+        'id': 'EXP018',
+        'model': 'EfficientNet-B3',
+        'dataset_train': 'TrashNet + GD + 15% of RealWaste (mitigation: partial domain exposure)',
+        'dataset_test': 'RealWaste, remaining held-out 85% (never seen in training)',
+        'epochs': 20,
+        'optimizer': 'AdamW',
+        'lr': 1e-4,
+        'balanced_accuracy': 0.799,
+        'status': 'DONE',
+        'notes': 'Same 15% RealWaste fine-tune recipe as EXP017, applied to EfficientNet-B3. '
+                 'Balanced accuracy on held-out RealWaste: 79.9%, up from zero-shot 53.6% '
+                 '(EXP010) - a +26.3 point improvement, the LARGEST improvement of all 3 '
+                 'models. EfficientNet was the worst zero-shot generalizer (most reliant on '
+                 'source-domain surface cues), so it had the most to gain from even limited '
+                 'real-domain exposure. Per-class F1 on held-out RealWaste: cardboard 0.73, '
+                 'glass 0.81, metal 0.81, paper 0.78, plastic 0.78, trash 0.90. Confirms the '
+                 'fine-tuning effect generalizes across CNN architectures, not just ResNet-50.',
+    },
+    {
+        'id': 'EXP019',
+        'model': 'ViT-Small/16',
+        'dataset_train': 'TrashNet + GD + 15% of RealWaste (mitigation: partial domain exposure)',
+        'dataset_test': 'RealWaste, remaining held-out 85% (never seen in training)',
+        'epochs': 20,
+        'optimizer': 'AdamW',
+        'lr': 1e-4,
+        'balanced_accuracy': 0.816,
+        'status': 'DONE',
+        'notes': 'Same 15% RealWaste fine-tune recipe as EXP017/018, applied to ViT-Small/16. '
+                 'Balanced accuracy on held-out RealWaste: 81.6%, up from zero-shot 62.2% '
+                 '(EXP011) - a +19.4 point improvement. BEST RESULT OF ALL OOD EVALUATIONS '
+                 'in the project (zero-shot and fine-tuned combined). Per-class F1 on held-out '
+                 'RealWaste: cardboard 0.76, glass 0.85, metal 0.85, paper 0.80, plastic 0.80, '
+                 'trash 0.89. ViT remains the best generalizer even after fine-tuning, '
+                 'consistent with EXP011 - attention-based features transfer better than CNN '
+                 'features both zero-shot and with limited target-domain supervision. '
+                 'SUMMARY ACROSS ALL 3 MODELS (zero-shot -> fine-tuned): ResNet-50 60.0->76.4 '
+                 '(+16.4), EfficientNet-B3 53.6->79.9 (+26.3), ViT-Small 62.2->81.6 (+19.4). '
+                 'This is the strongest and most consistent mitigation finding in the project.',
     },
     {
         'id': 'EXP003',
