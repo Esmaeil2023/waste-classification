@@ -279,6 +279,74 @@ EXPERIMENT_RESULTS = [
                  'This is the strongest and most consistent mitigation finding in the project.',
     },
     {
+        'id': 'EXP020',
+        'model': 'ResNet-50 / EfficientNet-B3 / ViT-Small (all fine-tuned, EXP017-019)',
+        'dataset_train': 'N/A - evaluation only, no retraining',
+        'dataset_test': 'TACO (Trash Annotations in Context), 4,784 bounding-box crops',
+        'balanced_accuracy': None,
+        'status': 'DONE',
+        'notes': 'Evaluated the 15%-RealWaste-fine-tuned checkpoints (EXP017-019) on TACO, '
+                 'a third, fully independent real-world litter dataset never seen in any '
+                 'training. TACO is a detection dataset (COCO format, 60 fine categories / 28 '
+                 'supercategories); built a category-level map to our 6 classes and cropped '
+                 'all 4,784 bounding-box annotations into individual images. RESULT: balanced '
+                 'accuracy collapsed to 33.3% (ResNet-50), 34.1% (EfficientNet), 33.8% (ViT) - '
+                 'despite the same models scoring 76.4/79.9/81.6% on held-out RealWaste. All '
+                 'three architectures converged to within 0.8pts of each other, suggesting a '
+                 'shared DATA problem rather than a model-specific generalization failure.',
+    },
+    {
+        'id': 'EXP021',
+        'model': 'N/A - data diagnostic',
+        'dataset_train': 'N/A',
+        'dataset_test': 'TACO crop size analysis',
+        'balanced_accuracy': None,
+        'status': 'DONE',
+        'notes': 'Diagnostic: measured crop dimensions for all 4,784 TACO bounding-box crops. '
+                 'Found 650/4784 (13.6%) under 32x32px, 1433/4784 (30%) under 64x64px, and '
+                 '2024/4784 (42.3%) under 100x100px. Many TACO annotations are small litter '
+                 'fragments (cigarette butts, bottle caps, pop tabs) that become low-information '
+                 'blobs when upscaled to the model\'s 224x224 input size.',
+    },
+    {
+        'id': 'EXP022',
+        'model': 'ResNet-50 / EfficientNet-B3 / ViT-Small (fine-tuned)',
+        'dataset_train': 'N/A - evaluation only',
+        'dataset_test': 'TACO, filtered to crops >=100x100px (2,760 of 4,784 retained)',
+        'balanced_accuracy': None,
+        'status': 'DONE',
+        'notes': 'Re-ran EXP020 after filtering out crops smaller than 100x100px to test '
+                 'whether tiny low-information crops explained the collapse. Balanced accuracy '
+                 'improved modestly to 38.8% (ResNet-50), 39.0% (EfficientNet), 39.3% (ViT) - '
+                 'still far below RealWaste performance. Crop size filtering helped but did not '
+                 'resolve the core issue. All models showed the same failure pattern: very low '
+                 'precision but very high recall on the trash class (~0.17 precision / ~0.75 '
+                 'recall), indicating the models default to predicting "trash" when uncertain '
+                 'rather than confidently misclassifying into a specific wrong class.',
+    },
+    {
+        'id': 'EXP023',
+        'model': 'ResNet-50 / EfficientNet-B3 / ViT-Small',
+        'dataset_train': 'N/A - analysis/conclusion',
+        'dataset_test': 'Cross-dataset comparison: RealWaste (held-out) vs TACO (filtered)',
+        'balanced_accuracy': None,
+        'status': 'DONE',
+        'notes': 'CONCLUSION of TACO investigation (EXP020-022): the gap is structural, not '
+                 'fixable by crop filtering or more fine-tuning. TrashNet/GD12/RealWaste are '
+                 'all OBJECT-CENTRIC photographs (single item, centered, fills frame). TACO is '
+                 'an IN-CONTEXT LITTER DETECTION dataset (small/partial/fragmented objects in '
+                 'natural/urban scenes) - cropping bounding boxes does not convert it into an '
+                 'equivalent object-centric classification task. The 15% RealWaste fine-tuning '
+                 '(EXP017-019) generalizes WITHIN the object-centric domain (clean studio -> '
+                 'real landfill object photos) but does NOT transfer ACROSS the task-structure '
+                 'boundary to in-context litter detection. This is now treated as a documented '
+                 'scope boundary for the project (see report limitations section), not a '
+                 'deficiency in the mitigation strategy. Practical implication for the own/hard '
+                 'team dataset: photos must remain object-centric (one item, fills frame, hard '
+                 'real-world conditions) to stay within the domain our fine-tuned models can '
+                 'address - team given explicit photography protocol to this effect.',
+    },
+    {
         'id': 'EXP003',
         'model': 'EfficientNet-B3',
         'dataset_train': 'TrashNet',
