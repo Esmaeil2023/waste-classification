@@ -405,6 +405,28 @@ EXPERIMENT_RESULTS = [
                  'Genuine, reportable finding - not chased further as a bug.',
     },
     {
+        'id': 'EXP027',
+        'model': 'N/A - methodology/framing decision',
+        'dataset_train': 'N/A',
+        'dataset_test': 'Own/team hard dataset - final reporting scope',
+        'balanced_accuracy': None,
+        'status': 'DONE',
+        'notes': 'Per supervisor guidance (Sebastian, meeting July 4/5): own dataset evaluation '
+                 'does not need to cover all 6 classes - selecting a subset of well-behaved '
+                 'classes and building the narrative around them is acceptable and preferred '
+                 'over forcing a single misleading average. DECISION: report own-dataset '
+                 'results on 5 classes (cardboard, glass, paper, plastic, trash), excluding '
+                 'metal. Metal exclusion is explicitly justified in the report via EXP024 '
+                 '(diagnosed composition issue: small objects photographed against large '
+                 'natural backgrounds, e.g. tent peg/bottle cap on grass, causing models to '
+                 'default to predicting "trash"). This is presented as a documented limitation '
+                 'with root-cause analysis, not a hidden gap. Final own-dataset headline '
+                 'results (5-class, from EXP025): ResNet-50 zero-shot 43.6% -> fine-tuned '
+                 '58.9% (+15.3pts); EfficientNet-B3 34.6% -> 49.3% (+14.7pts); ViT-Small 53.0% '
+                 '-> 35.0% (-18.0pts, reported as an architecture-dependent limitation of the '
+                 'mitigation strategy, per EXP026).',
+    },
+    {
         'id': 'EXP003',
         'model': 'EfficientNet-B3',
         'dataset_train': 'TrashNet',
