@@ -427,6 +427,78 @@ EXPERIMENT_RESULTS = [
                  'mitigation strategy, per EXP026).',
     },
     {
+        'id': 'EXP028',
+        'model': 'ResNet-50',
+        'dataset_train': 'TrashNet + GD (5-class only, trash excluded) + border-background augmentation',
+        'dataset_test': 'RealWaste (OOD), 100% held out, zero-shot, 5-class only',
+        'epochs': 20,
+        'optimizer': 'AdamW',
+        'lr': 1e-4,
+        'balanced_accuracy': 0.580,
+        'status': 'DONE',
+        'notes': 'Redesigned mitigation approach per Sebastian guidance: RealWaste kept 100% '
+                 'test-only (no train/test mixing this time). Combined 5 targeted fixes in one '
+                 'run: (1) dropped trash class entirely - 5 classes only (cardboard, glass, '
+                 'metal, paper, plastic); (2) resize-pad transform instead of center-crop '
+                 '(preserves whole object, does not risk cropping off-center items); '
+                 '(3) label smoothing (0.1) + stronger weight decay (2e-2) to reduce '
+                 'overconfidence; (4) checkpoint selection by validation BALANCED ACCURACY '
+                 'instead of validation loss; (5) border-background augmentation - replaces '
+                 'only the OUTER BORDER of training images with synthetic messy backgrounds '
+                 '(textured colors, gradients, noise), leaving the object itself completely '
+                 'untouched. This targets the exact GradCAM-identified failure (models keying '
+                 'on background) without the risk of the initial attempt using GrabCut '
+                 'foreground segmentation, which was found via visual QA to cut into the '
+                 'object itself on ~50% of preview images and was discarded before training.',
+    },
+    {
+        'id': 'EXP028b',
+        'model': 'ResNet-50',
+        'dataset_train': 'TrashNet + GD (5-class only, trash excluded), NO augmentation (control)',
+        'dataset_test': 'RealWaste (OOD), 100% held out, zero-shot, 5-class only',
+        'epochs': 20,
+        'optimizer': 'AdamW',
+        'lr': 1e-4,
+        'balanced_accuracy': 0.565,
+        'status': 'DONE',
+        'notes': 'Ablation control for EXP028: identical setup (5-class, resize-pad, label '
+                 'smoothing, weight decay, checkpoint-by-balanced-accuracy) but WITHOUT border-'
+                 'background augmentation, to isolate its individual effect. RESULT: border-bg '
+                 'augmentation gave a clean, isolated +1.5 point improvement (56.5% -> 58.0%), '
+                 'with every other variable held constant. Per-class gains concentrated in '
+                 'glass (F1 0.38->0.43) and cardboard (F1 0.44->0.46) - plausibly the classes '
+                 'most reliant on background/lighting cues in the original studio photos. '
+                 'IMPORTANT CONTRAST: this is the opposite result from EXP012/013 (generic '
+                 'blur/noise/occlusion augmentation, which WORSENED OOD by -3pts). Confirms the '
+                 'original diagnosis: augmentation type matters, not just whether you augment - '
+                 'targeted background variation helps because it directly addresses the '
+                 'GradCAM-identified failure mode, while generic noise does not.',
+    },
+    {
+        'id': 'EXP029',
+        'model': 'EfficientNet-B3 / ViT-Small',
+        'dataset_train': 'TrashNet + GD (5-class only) + border-background augmentation',
+        'dataset_test': 'RealWaste (OOD), 100% held out, zero-shot, 5-class only',
+        'epochs': 20,
+        'optimizer': 'AdamW',
+        'lr': 1e-4,
+        'balanced_accuracy': None,
+        'status': 'DONE',
+        'notes': 'Rolled out the winning EXP028 config (border-bg-aug + all other fixes) to '
+                 'the remaining 2 architectures to confirm generalization. Results: '
+                 'EfficientNet-B3: 53.8% (worst of the 3, consistent with its ranking in every '
+                 'prior experiment - EXP010, EXP018 - EfficientNet is consistently the weakest '
+                 'zero-shot OOD generalizer). ViT-Small: 63.0% (BEST result across the entire '
+                 'project for zero-shot RealWaste, better than the original 6-class zero-shot '
+                 'of 62.2% in EXP011, despite trash - one of the models best-performing classes '
+                 '- being removed entirely). Architecture ranking (ViT > ResNet > EfficientNet) '
+                 'is fully consistent with every previous zero-shot experiment in the project, '
+                 'reinforcing that this ranking reflects a genuine architectural property '
+                 '(attention-based global feature learning vs local CNN texture reliance) '
+                 'rather than experimental noise. ViT per-class results are also the most '
+                 'balanced of the three: every class F1 above 0.47, no collapsed classes.',
+    },
+    {
         'id': 'EXP003',
         'model': 'EfficientNet-B3',
         'dataset_train': 'TrashNet',
