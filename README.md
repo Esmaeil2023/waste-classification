@@ -107,4 +107,4 @@ python src/xai.py --model resnet50 --checkpoint path/to/checkpoint.pth --realwas
 - Esmaeil Molapour — data pipeline, model training, OOD evaluation, GradCAM/XAI
 - Khaled Ibrahim — evaluation planning, AUROC/ECE metrics
 - Khawar Khan — experiment tracking
-- Ashley — iterative improvement strategy (planned)
+- Ashly Varghese — iterative improvement strategy (planned)
