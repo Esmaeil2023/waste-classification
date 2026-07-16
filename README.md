@@ -3,76 +3,117 @@
 Master's project for xAI-Proj-M, Chair of Explainable Machine Learning, University of Bamberg.
 Supervisor: Sebastian Doerrich.
 
+**Final report:** [`report/waste_classification_report.pdf`](report/waste_classification_report.pdf)
+
 ## Project Goal
 
-Train image classifiers to sort waste into 6 categories (cardboard, glass, metal,
-paper, plastic, trash), then measure how well they generalize from clean training
-data to real-world, out-of-distribution (OOD) images.
+Train image classifiers to sort waste, then measure how well they generalize
+from clean training data to real-world, out-of-distribution (OOD) images —
+diagnose why the gap exists, and test whether it can be closed without using
+any target-domain data in training.
 
 ## Datasets
 
-**Training (combined, 18,042 images):**
+**Training (combined, 18,042 images, 6-class baseline):**
 - TrashNet — 2,527 images, clean white background
 - Garbage Classification (12-class) — 15,515 images, mapped to our 6 classes
 
-**OOD Testing:**
-- RealWaste — 4,752 images of real landfill waste, never seen during training
+**OOD Testing (held out 100%, never used in training):**
+- RealWaste — 4,752 images of real landfill waste
+- TACO — 1,500 photos / 4,784 annotations of litter in natural/urban scenes
+  (scope-boundary test; see Key Findings below)
+- Own dataset — 170 images collected by the team, object-centric protocol
 
-## Models
+## Key Findings
 
-Three architectures trained for 20 epochs each (AdamW, batch size 32):
+**1. Baseline domain gap (6-class):** all three architectures lose 35-42%
+balanced accuracy moving from clean data to RealWaste, zero-shot.
 
-| Model | In-Distribution Acc | OOD Acc (RealWaste) | Domain Gap |
+| Model | In-Distribution | OOD (RealWaste, zero-shot) | Domain Gap |
 |---|---|---|---|
-| ResNet-50 | 95.5% | 60.0% | -35.5% |
-| EfficientNet-B3 | 96.0% | 53.6% | -42.4% |
-| ViT-Small/16 | 97.4% | 62.2% | -35.2% |
+| ResNet-50 | 95.5% | 60.0% | -35.5 pts |
+| EfficientNet-B3 | 96.0% | 53.6% | -42.4 pts |
+| ViT-Small/16 | 97.4% | 62.2% | -35.2 pts |
 
-**Key finding:** all models lose 35-42% accuracy when tested on real-world images.
-ViT generalizes best despite CNNs achieving similar in-distribution accuracy —
-its attention mechanism appears more robust to domain shift. EfficientNet overfits
-most to clean backgrounds.
+**2. Two standard mitigation strategies made OOD accuracy worse**, not better:
+heavier synthetic augmentation (-3.0 pts) and adding a third, more diverse
+training dataset (-3.6 pts). Both increase in-distribution confidence without
+improving transfer — evidence that data *type* matters more than quantity.
 
-## Explainability (GradCAM)
+**3. A redesigned pipeline (5-class, border-background augmentation) improves
+zero-shot RealWaste accuracy without ever using RealWaste in training:**
 
-GradCAM visualizations for all 3 models on RealWaste OOD samples are in `reports/`.
-They show which image regions each model focuses on for correct vs incorrect
-predictions, helping explain why the domain gap occurs (e.g. focusing on
-background or unrelated print/logos rather than material texture).
+| Model | Zero-shot OOD (5-class, border-bg-aug) |
+|---|---|
+| ResNet-50 | 58.0% |
+| EfficientNet-B3 | 53.8% |
+| ViT-Small (lr=2e-5) | **64.5%** (best zero-shot result in the project) |
+
+**4. TACO reveals a scope boundary, not a failure:** all three models collapse
+to 33-39% on TACO regardless of mitigation — but converge to nearly the same
+number, indicating a task-structure mismatch (object-centric classification
+vs. in-context litter detection) rather than a generalization failure.
+Addressing this would require a detection architecture (e.g. YOLO), out of
+scope for this project.
+
+**5. Calibration analysis reveals an accuracy/calibration trade-off:**
+ViT-Small is the most accurate OOD model but the *worst* calibrated
+(highest overconfidence, lowest OOD-detection AUROC); EfficientNet-B3 is
+the reverse. This pattern reproduces across both RealWaste and the own
+dataset — see `reports/reliability_diagram.png`.
+
+**6. Statistical testing (Wilcoxon, McNemar)** confirms all architecture
+differences on RealWaste (n=3,092) are significant. On the smaller own
+dataset (n=142), not all differences reach significance — see the report
+for the full breakdown.
+
+Full experiment history: 38 logged experiments (EXP001-EXP035) in
+`src/experiment_log.py`.
+
+## Explainability (Grad-CAM)
+
+Grad-CAM visualizations for all 3 models (5-class, border-bg-aug checkpoints)
+on RealWaste are in `reports/`, alongside a before/after comparison showing
+the effect of border-background augmentation on model attention, and
+confusion matrices showing the dominant material-confusion patterns
+(cardboard↔paper, glass↔plastic).
 
 ## Project Structure
 
+```
 src/
+  datasets.py          - dataset loaders, class mappings
+  models.py             - ResNet-50, EfficientNet-B3, ViT-Small builders
+  train.py               - training loop, weighted loss, label smoothing
+  evaluate.py            - OOD evaluation
+  xai.py                  - Grad-CAM generation for all 3 models (stratified sampling)
+  metrics.py             - balanced accuracy, domain gap, ECE/AUROC calibration,
+                           Wilcoxon/McNemar significance testing
+  config.py              - experiment configuration
+  data_audit.py          - verifies train/val/test split and label consistency
+  experiment_log.py      - full experiment history (EXP001-EXP035)
+  evaluation_plan.py     - evaluation methodology documentation
 
-datasets.py          - TrashNet and GD dataset loaders, class mapping
-
-models.py             - ResNet-50, EfficientNet-B3, ViT-Small builders
-
-train.py               - training loop with weighted loss for class imbalance
-
-evaluate.py            - OOD evaluation on RealWaste
-
-xai.py                  - GradCAM generation for all 3 models (handles ViT separately)
-
-metrics.py             - balanced accuracy, domain gap computation
-
-config.py              - experiment configuration and results summary
-
-data_audit.py          - verifies train/val/test split and label consistency
-
-experiment_log.py      - full experiment history (EXP001-EXP011)
-
-evaluation_plan.py     - evaluation methodology documentation
+notebooks/
+  *.ipynb                - Colab session notebooks with outputs preserved,
+                           evidencing the experiments behind the logged results
+                           (Kaggle credentials redacted; large embedded byte
+                           dumps from file-upload cells stripped to keep
+                           file sizes reasonable)
 
 reports/
+  class_distribution.png
+  gradcam_resnet50_5class.png / gradcam_efficientnet_5class.png / gradcam_vit_5class.png
+  before_after_resnet50.png
+  confusion_matrices_realwaste.png
+  reliability_diagram.png
+  results_bar_chart_v2.png
 
-class_distribution.png    - TrashNet split visualization
+report/
+  waste_classification_report.pdf   - final written report (LaTeX source also included)
+```
 
-gradcam_resnet50.png       - GradCAM for ResNet-50
-
-gradcam_efficientnet.png   - GradCAM for EfficientNet-B3
-
-gradcam_vit.png             - GradCAM for ViT-Small## How to Run
+## How to Run
 
 ### Setup
 ```bash
@@ -97,14 +138,27 @@ python src/evaluate.py
 Update CHECKPOINT_PATH and REALWASTE_ROOT at the bottom of the file to point
 to your trained checkpoint and dataset location.
 
-### Generate GradCAM visualizations
+### Generate Grad-CAM visualizations
 ```bash
 python src/xai.py --model resnet50 --checkpoint path/to/checkpoint.pth --realwaste path/to/RealWaste
 ```
 
+### Reproducing exact results
+Model checkpoints (`.pth` files) are stored in Google Drive rather than this
+repository due to size. The Colab notebooks in `notebooks/` document the
+exact training runs, code, and console output that produced every number
+reported in `src/experiment_log.py` and the final report. Note that exact
+reproduction of accuracy to the decimal point is not expected even with a
+fixed seed, due to standard GPU non-determinism in deep learning training;
+results within roughly 1-2 points of those logged are consistent with our
+runs.
+
 ## Team
 
-- Esmaeil Molapour — data pipeline, model training, OOD evaluation, GradCAM/XAI
-- Khaled Ibrahim — evaluation planning, AUROC/ECE metrics
-- Khawar Khan — experiment tracking
-- Ashly Varghese — iterative improvement strategy (planned)
+- Esmaeil Molapour — data pipeline, all model training, OOD evaluation,
+  mitigation experiments, Grad-CAM/XAI, TACO analysis, own-dataset
+  collection and evaluation, calibration analysis, statistical testing,
+  report writing
+- Khaled Ibrahim — evaluation methodology planning, calibration metric design
+- Khawar Khan — experiment tracking infrastructure, architecture literature review
+- Ashly Varghese — early augmentation experiment design
