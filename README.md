@@ -3,7 +3,7 @@
 Master's project for xAI-Proj-M, Chair of Explainable Machine Learning, University of Bamberg.
 Supervisor: Sebastian Doerrich.
 
-**Final report:** [`report/waste_classification_report.pdf`](report/waste_classification_report.pdf)
+**Final report:** [`report/ofu_xai_2022.pdf`](report/ofu_xai_2022.pdf)
 
 ## Project Goal
 
@@ -86,6 +86,7 @@ src/
   models.py             - ResNet-50, EfficientNet-B3, ViT-Small builders
   train.py               - training loop, weighted loss, label smoothing
   evaluate.py            - OOD evaluation
+  evauateor.py           - Khaled's evaluation utilities (TACO evaluator, batch printing)
   xai.py                  - Grad-CAM generation for all 3 models (stratified sampling)
   metrics.py             - balanced accuracy, domain gap, ECE/AUROC calibration,
                            Wilcoxon/McNemar significance testing
@@ -94,12 +95,17 @@ src/
   experiment_log.py      - full experiment history (EXP001-EXP035)
   evaluation_plan.py     - evaluation methodology documentation
 
+evaluation_plan.md      - Khaled's evaluation methodology notes
+
 notebooks/
-  *.ipynb                - Colab session notebooks with outputs preserved,
-                           evidencing the experiments behind the logged results
-                           (Kaggle credentials redacted; large embedded byte
-                           dumps from file-upload cells stripped to keep
-                           file sizes reasonable)
+  colab_5class_border_bg_aug_calibration.ipynb            - main pipeline: 5-class
+    redesign, border-bg augmentation, calibration analysis
+  colab_5class_border_bg_aug_calibration_wilcoxon.ipynb    - Wilcoxon/McNemar
+    significance testing session
+  khaled_evaluation_colab.ipynb                             - Khaled's evaluation
+    methodology session
+  (Kaggle credentials redacted; large embedded byte dumps from file-upload
+  cells stripped to keep file sizes reasonable)
 
 reports/
   class_distribution.png
@@ -110,7 +116,12 @@ reports/
   results_bar_chart_v2.png
 
 report/
-  waste_classification_report.pdf   - final written report (LaTeX source also included)
+  ofu_xai_2022.pdf        - final written report (compiled PDF)
+  ofu_xai_2022.tex        - LaTeX source
+  bibliography.bib, *.sty, math_*.tex  - LaTeX build dependencies
+  figures/                - self-contained copy of the figures used in the
+                           report, so it recompiles standalone without
+                           depending on the reports/ folder above
 ```
 
 ## How to Run
@@ -159,6 +170,8 @@ runs.
   mitigation experiments, Grad-CAM/XAI, TACO analysis, own-dataset
   collection and evaluation, calibration analysis, statistical testing,
   report writing
-- Khaled Ibrahim — evaluation methodology planning, calibration metric design
+- Khaled Ibrahim — evaluation methodology planning and documentation
+  (`evaluation_plan.md`, `src/evaluation_plan.py`), TACO evaluator
+  utilities (`src/evauateor.py`), calibration metric design
 - Khawar Khan — experiment tracking infrastructure, architecture literature review
 - Ashly Varghese — early augmentation experiment design
